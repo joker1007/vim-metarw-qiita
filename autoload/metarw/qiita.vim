@@ -177,6 +177,15 @@ function! s:read_new_items() " {{{
   return ["browse", list]
 endfunction " }}}
 
+function! s:read_tag_items(tag) " {{{
+  let res = webapi#http#get(s:qiita_path("/tags/" . a:tag . "/items", 1))
+  let content = webapi#json#decode(res.content)
+  let list = map(content,
+    \ '{"label" : v:val.title, "fakepath" : "qiita:items/" . v:val.uuid}')
+  echo list
+  return ["browse", list]
+endfunction " }}}
+
 function! s:parse_options(str) " {{{
   let result = {}
   let pairs = split(a:str, "&")
@@ -224,6 +233,9 @@ function! s:parse_incomplete_fakepath(incomplete_fakepath) " {{{
       elseif fragments[1] == "users"
         let _.mode = 'users'
         let _.path = fragments[2]
+      elseif fragments[1] == "tags"
+        let _.mode = 'tag_items'
+        let _.path = fragments[2]
       endif
     elseif len(fragments) == 2
       if fragments[1] == "items"
@@ -243,6 +255,8 @@ function! metarw#qiita#read(fakepath) " {{{
     return s:read_user(_.path)
   elseif _.mode == "new_items"
     return s:read_new_items()
+  elseif _.mode == "tag_items"
+    return s:read_tag_items(_.path)
   endif
 endfunction " }}}
 
