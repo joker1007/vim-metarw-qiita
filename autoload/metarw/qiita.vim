@@ -6,6 +6,11 @@ if !exists('g:qiita_token')
   finish
 endif
 
+if !exists('g:qiita_user')
+  echohl ErrorMsg | echomsg "require 'g:qiita_user' variables" | echohl None
+  finish
+endif
+
 if !executable('curl')
   echohl ErrorMsg | echomsg "require 'curl' command" | echohl None
   finish
@@ -19,11 +24,11 @@ function! s:qiita_path(path) " {{{
   return s:endpoint_url() . a:path . "?token=" . g:qiita_token
 endfunction " }}}
 
-function! s:get_title() " {{{
+function! s:parse_title() " {{{
   return getline(1)
 endfunction " }}}
 
-function! s:get_body() " {{{
+function! s:parse_body() " {{{
   return join(getline(4, "$"), "\n")
 endfunction " }}}
 
@@ -88,9 +93,9 @@ function! s:construct_post_data(options) " {{{
   endfor
 
   let data = {
-        \ "title" : s:get_title(),
+        \ "title" : s:parse_title(),
         \ "tags" : tag_info,
-        \ "body" : s:get_body(),
+        \ "body" : s:parse_body(),
         \ "private" : Private,
         \ "tweet" : Tweet,
         \ "gist" : Gist,
@@ -159,9 +164,6 @@ function! s:read_user(user) " {{{
   return ["browse", list]
 endfunction " }}}
 
-function! metarw#qiita#complete(arglead, cmdline, cursorpos)
-endfunction
-
 function! s:parse_options(str) " {{{
   let result = {}
   let pairs = split(a:str, "&")
@@ -169,25 +171,6 @@ function! s:parse_options(str) " {{{
     let [key, value] = split(p, '=')
     let result[key] = value
   endfor
-  return result
-endfunction " }}}
-
-function! metarw#qiita#read(fakepath) " {{{
-  let _ = s:parse_incomplete_fakepath(a:fakepath)
-  if _.mode == "items"
-    return s:read_content(_.path)
-  elseif _.mode == "users"
-    return s:read_user(_.path)
-  endif
-endfunction " }}}
-
-function! metarw#qiita#write(fakepath, line1, line2, append_p) " {{{
-  let _ = s:parse_incomplete_fakepath(a:fakepath)
-  if _.mode == "write_new"
-    let result = s:post_current(_.options)
-  elseif _.mode == "items"
-    let result = s:update_item(_.path, _.options)
-  endif
   return result
 endfunction " }}}
 
@@ -235,6 +218,30 @@ function! s:parse_incomplete_fakepath(incomplete_fakepath) " {{{
   endif
 
   return _
+endfunction " }}}
+
+function! metarw#qiita#read(fakepath) " {{{
+  let _ = s:parse_incomplete_fakepath(a:fakepath)
+  if _.mode == "items"
+    return s:read_content(_.path)
+  elseif _.mode == "users"
+    return s:read_user(_.path)
+  endif
+endfunction " }}}
+
+function! metarw#qiita#write(fakepath, line1, line2, append_p) " {{{
+  let _ = s:parse_incomplete_fakepath(a:fakepath)
+  if _.mode == "write_new"
+    let result = s:post_current(_.options)
+  elseif _.mode == "items"
+    let result = s:update_item(_.path, _.options)
+  endif
+  return result
+endfunction " }}}
+
+" Nop
+function! metarw#qiita#complete(arglead, cmdline, cursorpos) " {{{
+  return []
 endfunction " }}}
 
 let &cpo = s:save_cpo
