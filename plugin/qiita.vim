@@ -27,6 +27,11 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 command! QiitaMine execute "edit qiita:users/" . g:qiita_user
+command! QiitaPost write qiita:
+command! QiitaNewItems execute "edit qiita:items/"
+command! -nargs=1 QiitaOpen execute "edit qiita:items/" . "<args>"
+command! -nargs=1 QiitaUserItems execute "edit qiita:users/" . "<args>"
+command! -nargs=1 QiitaTagItems execute "edit qiita:tags/" . "<args>"
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
