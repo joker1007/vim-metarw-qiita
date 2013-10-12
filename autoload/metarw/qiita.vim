@@ -211,6 +211,15 @@ function! s:read_tag_items(tag) " {{{
   return ["browse", list]
 endfunction " }}}
 
+function! s:read_my_stocks() " {{{
+  let res = webapi#http#get(s:qiita_path("/stocks", 1))
+  let content = webapi#json#decode(res.content)
+  let list = map(content,
+    \ '{"label" : v:val.title, "fakepath" : "qiita:items/" . v:val.uuid}')
+  echo list
+  return ["browse", list]
+endfunction " }}}
+
 function! s:parse_options(str) " {{{
   let result = {}
   let pairs = split(a:str, "&")
@@ -265,6 +274,8 @@ function! s:parse_incomplete_fakepath(incomplete_fakepath) " {{{
     elseif len(fragments) == 2
       if fragments[1] == "items"
         let _.mode = 'new_items'
+      elseif fragments[1] == "stocks"
+        let _.mode = 'my_stocks'
       endif
     endif
   endif
@@ -282,6 +293,8 @@ function! metarw#qiita#read(fakepath) " {{{
     return s:read_new_items()
   elseif _.mode == "tag_items"
     return s:read_tag_items(_.path)
+  elseif _.mode == "my_stocks"
+    return s:read_my_stocks()
   endif
 endfunction " }}}
 
