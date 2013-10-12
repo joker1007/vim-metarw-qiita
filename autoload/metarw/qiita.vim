@@ -189,11 +189,15 @@ function! s:read_content(uuid) " {{{
   return ['done', '']
 endfunction " }}}
 
+function! s:label_format() " {{{
+  return 'v:val.title . " (" . v:val.stock_count . ")"'
+endfunction " }}}
+
 function! s:read_user(user) " {{{
   let res = webapi#http#get(s:qiita_path("/users/" . a:user . "/items", 1))
   let content = webapi#json#decode(res.content)
   let list = map(content,
-    \ '{"label" : v:val.title, "fakepath" : "qiita:items/" . v:val.uuid}')
+    \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
   echo list
   return ["browse", list]
 endfunction " }}}
@@ -202,7 +206,7 @@ function! s:read_new_items() " {{{
   let res = webapi#http#get(s:qiita_path("/items", 0))
   let content = webapi#json#decode(res.content)
   let list = map(content,
-    \ '{"label" : v:val.title, "fakepath" : "qiita:items/" . v:val.uuid}')
+    \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
   echo list
   return ["browse", list]
 endfunction " }}}
@@ -211,7 +215,7 @@ function! s:read_tag_items(tag) " {{{
   let res = webapi#http#get(s:qiita_path("/tags/" . a:tag . "/items", 1))
   let content = webapi#json#decode(res.content)
   let list = map(content,
-    \ '{"label" : v:val.title, "fakepath" : "qiita:items/" . v:val.uuid}')
+    \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
   echo list
   return ["browse", list]
 endfunction " }}}
@@ -220,7 +224,7 @@ function! s:read_my_stocks() " {{{
   let res = webapi#http#get(s:qiita_path("/stocks", 1))
   let content = webapi#json#decode(res.content)
   let list = map(content,
-    \ '{"label" : v:val.title, "fakepath" : "qiita:items/" . v:val.uuid}')
+    \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
   echo list
   return ["browse", list]
 endfunction " }}}
@@ -235,13 +239,13 @@ function! s:parse_options(str) " {{{
   return result
 endfunction " }}}
 
-function! s:open_browser()
+function! s:open_browser() " {{{
   if has_key(b:qiita_metadata, "url")
     call openbrowser#open(b:qiita_metadata.url)
   else
     echoerr 'Current buffer is not qiita post'
   end
-endfunction
+endfunction " }}}
 
 function! s:parse_incomplete_fakepath(incomplete_fakepath) " {{{
   let _ = {
