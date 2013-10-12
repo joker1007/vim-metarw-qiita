@@ -20,8 +20,12 @@ function! s:endpoint_url() " {{{
   return "https://qiita.com/api/v1"
 endfunction " }}}
 
-function! s:qiita_path(path) " {{{
-  return s:endpoint_url() . a:path . "?token=" . g:qiita_token
+function! s:qiita_path(path, auth) " {{{
+  if a:auth
+    return s:endpoint_url() . a:path . "?token=" . g:qiita_token
+  else
+    return s:endpoint_url() . a:path
+  endif
 endfunction " }}}
 
 function! s:parse_title() " {{{
@@ -108,7 +112,7 @@ function! s:post_current(options) " {{{
   echo a:options
   let data = s:construct_post_data(a:options)
   let json = webapi#json#encode(data)
-  let res = webapi#http#post(s:qiita_path("/items"), json, {"Content-type" : "application/json"})
+  let res = webapi#http#post(s:qiita_path("/items", 1), json, {"Content-type" : "application/json"})
   let content = webapi#json#decode(res.content)
 
   if res.status =~ "^2.*"
@@ -129,7 +133,7 @@ function! s:update_item(uuid, options) " {{{
   call remove(data, 'tweet')
   call remove(data, 'gist')
   let json = webapi#json#encode(data)
-  let res = webapi#http#post(s:qiita_path("/items/" . a:uuid), json, {"Content-type" : "application/json"}, "PUT")
+  let res = webapi#http#post(s:qiita_path("/items/" . a:uuid, 1), json, {"Content-type" : "application/json"}, "PUT")
   let content = webapi#json#decode(res.content)
 
   if res.status =~ "^2.*"
@@ -141,7 +145,7 @@ function! s:update_item(uuid, options) " {{{
 endfunction " }}}
 
 function! s:read_content(uuid) " {{{
-  let res = webapi#http#get(s:qiita_path("/items/" . a:uuid))
+  let res = webapi#http#get(s:qiita_path("/items/" . a:uuid, 1))
   let content = webapi#json#decode(res.content)
 
   let body = join([content.title, s:tags_to_line(content.tags), "", content.raw_body], "\n")
@@ -156,7 +160,16 @@ function! s:read_content(uuid) " {{{
 endfunction " }}}
 
 function! s:read_user(user) " {{{
-  let res = webapi#http#get(s:qiita_path("/users/" . a:user . "/items"))
+  let res = webapi#http#get(s:qiita_path("/users/" . a:user . "/items", 1))
+  let content = webapi#json#decode(res.content)
+  let list = map(content,
+    \ '{"label" : v:val.title, "fakepath" : "qiita:items/" . v:val.uuid}')
+  echo list
+  return ["browse", list]
+endfunction " }}}
+
+function! s:read_new_items() " {{{
+  let res = webapi#http#get(s:qiita_path("/items", 0))
   let content = webapi#json#decode(res.content)
   let list = map(content,
     \ '{"label" : v:val.title, "fakepath" : "qiita:items/" . v:val.uuid}')
@@ -196,13 +209,11 @@ function! s:parse_incomplete_fakepath(incomplete_fakepath) " {{{
     let fragments[1] = path_fragments[0]
   elseif len(path_fragments) >= 3
     echoerr 'path is invalid'
-    let _.mode = ''
     return _
   endif
 
   if empty(fragments[1])
     let _.mode = 'write_new'
-    let _.path = ''
   else
     let fragments = [fragments[0]] + split(fragments[1], '[\/]', !0)
 
@@ -213,6 +224,10 @@ function! s:parse_incomplete_fakepath(incomplete_fakepath) " {{{
       elseif fragments[1] == "users"
         let _.mode = 'users'
         let _.path = fragments[2]
+      endif
+    elseif len(fragments) == 2
+      if fragments[1] == "items"
+        let _.mode = 'new_items'
       endif
     endif
   endif
@@ -226,6 +241,8 @@ function! metarw#qiita#read(fakepath) " {{{
     return s:read_content(_.path)
   elseif _.mode == "users"
     return s:read_user(_.path)
+  elseif _.mode == "new_items"
+    return s:read_new_items()
   endif
 endfunction " }}}
 
@@ -235,6 +252,8 @@ function! metarw#qiita#write(fakepath, line1, line2, append_p) " {{{
     let result = s:post_current(_.options)
   elseif _.mode == "items"
     let result = s:update_item(_.path, _.options)
+  else
+    let result = ['done', '']
   endif
   return result
 endfunction " }}}
