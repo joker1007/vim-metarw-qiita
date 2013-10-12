@@ -142,10 +142,6 @@ function! s:post_current(options) " {{{
 
   if res.status =~ "^2.*"
     echomsg content.url
-    let b:qiita_metadata = {
-          \ 'private' : content.private,
-          \ 'url' : content.url,
-          \}
     return ['done', '']
   else
     return ['error', 'Failed to post new item']
@@ -176,11 +172,20 @@ function! s:read_content(uuid) " {{{
   let body = join([content.title, s:tags_to_line(content.tags), "", content.raw_body], "\n")
   put =body
   set ft=markdown
+
+  if content.user.url_name == g:qiita_user
+    let mine = 1
+  else
+    let mine = 0
+  endif
   let b:qiita_metadata = {
         \ 'private' : content.private,
         \ 'url' : content.url,
+        \ 'mine' : mine,
+        \ 'user' : content.user.url_name,
         \}
 
+  command! -buffer QiitaBrowse call s:open_browser()
   return ['done', '']
 endfunction " }}}
 
@@ -229,6 +234,14 @@ function! s:parse_options(str) " {{{
   endfor
   return result
 endfunction " }}}
+
+function! s:open_browser()
+  if has_key(b:qiita_metadata, "url")
+    call openbrowser#open(b:qiita_metadata.url)
+  else
+    echoerr 'Current buffer is not qiita post'
+  end
+endfunction
 
 function! s:parse_incomplete_fakepath(incomplete_fakepath) " {{{
   let _ = {
