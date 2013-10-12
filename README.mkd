@@ -1,0 +1,60 @@
+# vim-metarw-qiita
+
+vim-metarwを利用してQiitaを読み書きするプラグイン
+
+## Requirements
+
+- vim-metarw
+- webapi-vim
+- curl
+
+## Usage
+
+### Post current buffer as new item
+
+```
+:write qiita:
+```
+
+### Get my item list
+
+
+```
+:edit qiita:users/<my_username>
+```
+
+or
+
+```
+:QiitaMine
+```
+
+### Update current open item
+
+```
+:write
+```
+
+### Get user item list
+
+```
+:edit qiita:users/<username>
+```
+
+or
+
+```
+:QiitaUserItems <username>
+```
+
+### Get tag item list
+
+```
+:edit qiita:tags/<tagname>
+```
+
+or
+
+```
+:QiitaTagItems <tagname>
+```
