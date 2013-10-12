@@ -8,6 +8,20 @@ vim-metarwを利用してQiitaを読み書きするプラグイン
 - webapi-vim
 - curl
 
+## Format
+1行目がタイトル
+2行目がタグ
+
+4行目以降が本文のmarkdown
+
+### タグの書式
+スペースでタグを区切る。
+タグ名に続けて`:`を挟んでバージョン番号を書く
+
+```
+Vim:6.4 Ruby:2.0.0-p247 Ruby:1.9.3
+```
+
 ## Usage
 
 ### Post current buffer as new item
