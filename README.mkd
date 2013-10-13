@@ -24,6 +24,13 @@ Vim:6.4 Ruby:2.0.0-p247 Ruby:1.9.3
 
 ## Usage
 
+### Write vimrc
+
+```vim
+let g:qiita_user='joker1007'
+let g:qiita_token='xxxxxx' " API経由で取得しておく
+```
+
 ### Post current buffer as new item
 
 ```
