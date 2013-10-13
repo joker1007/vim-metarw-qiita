@@ -228,12 +228,10 @@ function! s:label_format() " {{{
   return 'v:val.title . " (" . v:val.stock_count . ")"'
 endfunction " }}}
 
-function! s:read_user(user, ...) " {{{
+function! s:read_item_list(url, fakepath, ...) " {{{
   let page = a:0 > 0 ? a:000[0] : 1
-  let fakepath = "qiita:users/" . a:user
-  let url = s:qiita_path("/users/" . a:user . "/items", 1, page)
 
-  let res = webapi#http#get(url)
+  let res = webapi#http#get(a:url)
   if res.status !~ "^2.*"
     return ['error', 'Failed to fetch items']
   endif
@@ -242,64 +240,7 @@ function! s:read_user(user, ...) " {{{
   let list = map(content,
     \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
 
-  call s:pagenation_helper(list, fakepath, res.header, page)
-
-  return ["browse", list]
-endfunction " }}}
-
-function! s:read_new_items(...) " {{{
-  let page = a:0 > 0 ? a:000[0] : 1
-  let fakepath = "qiita:items"
-  let url = s:qiita_path("/items", 0, page)
-
-  let res = webapi#http#get(url)
-  if res.status !~ "^2.*"
-    return ['error', 'Failed to fetch items']
-  endif
-
-  let content = webapi#json#decode(res.content)
-  let list = map(content,
-    \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
-
-  call s:pagenation_helper(list, fakepath, res.header, page)
-
-  return ["browse", list]
-endfunction " }}}
-
-function! s:read_tag_items(tag, ...) " {{{
-  let page = a:0 > 0 ? a:000[0] : 1
-  let fakepath = "qiita:tags/" . a:tag
-  let url = s:qiita_path("/tags/" . a:tag . "/items", 1, page)
-
-  let res = webapi#http#get(url)
-  if res.status !~ "^2.*"
-    return ['error', 'Failed to fetch items']
-  endif
-
-  let content = webapi#json#decode(res.content)
-  let list = map(content,
-    \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
-
-  call s:pagenation_helper(list, fakepath, res.header, page)
-
-  return ["browse", list]
-endfunction " }}}
-
-function! s:read_my_stocks(...) " {{{
-  let page = a:0 > 0 ? a:000[0] : 1
-  let fakepath = "qiita:stocks"
-  let url = s:qiita_path("/stocks", 1, page)
-
-  let res = webapi#http#get(url)
-  if res.status !~ "^2.*"
-    return ['error', 'Failed to fetch items']
-  endif
-
-  let content = webapi#json#decode(res.content)
-  let list = map(content,
-    \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
-
-  call s:pagenation_helper(list, fakepath, res.header, page)
+  call s:pagenation_helper(list, a:fakepath, res.header, page)
 
   return ["browse", list]
 endfunction " }}}
@@ -399,13 +340,21 @@ function! metarw#qiita#read(fakepath) " {{{
   if _.mode == "items"
     return s:read_content(_.path)
   elseif _.mode == "users"
-    return s:read_user(_.path, _.options.page)
+    let fakepath = "qiita:users/" . _.path
+    let url = s:qiita_path("/users/" . _.path . "/items", 1, _.options.page)
+    return s:read_item_list(url, fakepath, _.options.page)
   elseif _.mode == "new_items"
-    return s:read_new_items(_.options.page)
+    let fakepath = "qiita:items"
+    let url = s:qiita_path("/items", 0, _.options.page)
+    return s:read_item_list(url, fakepath, _.options.page)
   elseif _.mode == "tag_items"
-    return s:read_tag_items(_.path, _.options.page)
+    let fakepath = "qiita:tags/" . _.path
+    let url = s:qiita_path("/tags/" . _.path . "/items", 1, _.options.page)
+    return s:read_item_list(url, fakepath, _.options.page)
   elseif _.mode == "my_stocks"
-    return s:read_my_stocks(_.options.page)
+    let fakepath = "qiita:stocks"
+    let url = s:qiita_path("/stocks", 1, _.options.page)
+    return s:read_item_list(url, fakepath, _.options.page)
   endif
 endfunction " }}}
 
