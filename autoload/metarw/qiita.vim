@@ -167,6 +167,10 @@ endfunction " }}}
 
 function! s:read_content(uuid) " {{{
   let res = webapi#http#get(s:qiita_path("/items/" . a:uuid, 1))
+  if res.status !~ "^2.*"
+    return ['error', 'Failed to fetch item']
+  endif
+
   let content = webapi#json#decode(res.content)
 
   let body = join([content.title, s:tags_to_line(content.tags), "", content.raw_body], "\n")
@@ -181,11 +185,14 @@ function! s:read_content(uuid) " {{{
   let b:qiita_metadata = {
         \ 'private' : content.private,
         \ 'url' : content.url,
+        \ 'uuid' : content.uuid,
+        \ 'stocked' : content.stocked,
         \ 'mine' : mine,
         \ 'user' : content.user.url_name,
         \}
 
   command! -buffer QiitaBrowse call s:open_browser()
+  command! -buffer QiitaStock  call s:stock_item()
   return ['done', '']
 endfunction " }}}
 
@@ -195,6 +202,10 @@ endfunction " }}}
 
 function! s:read_user(user) " {{{
   let res = webapi#http#get(s:qiita_path("/users/" . a:user . "/items", 1))
+  if res.status !~ "^2.*"
+    return ['error', 'Failed to fetch items']
+  endif
+
   let content = webapi#json#decode(res.content)
   let list = map(content,
     \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
@@ -204,6 +215,10 @@ endfunction " }}}
 
 function! s:read_new_items() " {{{
   let res = webapi#http#get(s:qiita_path("/items", 0))
+  if res.status !~ "^2.*"
+    return ['error', 'Failed to fetch items']
+  endif
+
   let content = webapi#json#decode(res.content)
   let list = map(content,
     \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
@@ -213,6 +228,10 @@ endfunction " }}}
 
 function! s:read_tag_items(tag) " {{{
   let res = webapi#http#get(s:qiita_path("/tags/" . a:tag . "/items", 1))
+  if res.status !~ "^2.*"
+    return ['error', 'Failed to fetch items']
+  endif
+
   let content = webapi#json#decode(res.content)
   let list = map(content,
     \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
@@ -222,6 +241,10 @@ endfunction " }}}
 
 function! s:read_my_stocks() " {{{
   let res = webapi#http#get(s:qiita_path("/stocks", 1))
+  if res.status !~ "^2.*"
+    return ['error', 'Failed to fetch items']
+  endif
+
   let content = webapi#json#decode(res.content)
   let list = map(content,
     \ '{"label" : ' . s:label_format() . ', "fakepath" : "qiita:items/" . v:val.uuid}')
@@ -240,11 +263,25 @@ function! s:parse_options(str) " {{{
 endfunction " }}}
 
 function! s:open_browser() " {{{
-  if has_key(b:qiita_metadata, "url")
+  if exists('b:qiita_metadata')
     call openbrowser#open(b:qiita_metadata.url)
   else
     echoerr 'Current buffer is not qiita post'
-  end
+  endif
+endfunction " }}}
+
+function! s:stock_item() " {{{
+  if exists('b:qiita_metadata')
+    let res = webapi#http#post(s:qiita_path("/items/" . b:qiita_metadata.uuid . "/stock", 1), {}, {}, "PUT")
+    if res.status =~ "^2.*"
+      let b:qiita_metadata.stocked = 1
+      echomsg "Stocked."
+    else
+      echoerr "Failed to stocked."
+    endif
+  else
+    echoerr 'Current buffer is not qiita post'
+  endif
 endfunction " }}}
 
 function! s:parse_incomplete_fakepath(incomplete_fakepath) " {{{
