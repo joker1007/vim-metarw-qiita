@@ -47,10 +47,20 @@ endfunction " }}}
 
 function! s:qiita_path(path, auth) " {{{
   if a:auth
-    return s:endpoint_url() . a:path . "?token=" . g:qiita_token
+    let path = s:endpoint_url() . a:path . "?token=" . g:qiita_token
+
+    if exists('g:qiita_per_page')
+      let path = path . "&per_page=" . g:qiita_per_page
+    endif
   else
-    return s:endpoint_url() . a:path
+    let path = s:endpoint_url() . a:path
+
+    if exists('g:qiita_per_page')
+      let path = path . "?per_page=" . g:qiita_per_page
+    endif
   endif
+
+  return path
 endfunction " }}}
 
 function! s:parse_title() " {{{

@@ -29,6 +29,9 @@ Vim:6.4 Ruby:2.0.0-p247 Ruby:1.9.3
 ```vim
 let g:qiita_user='joker1007'
 let g:qiita_token='xxxxxx' " API経由で取得しておく
+
+" Optional
+let g:qiita_per_page=50 " Max 100
 ```
 
 ### Post current buffer as new item
