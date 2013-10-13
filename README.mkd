@@ -72,3 +72,15 @@ or
 ```
 :QiitaTagItems <tagname>
 ```
+
+### Stock current open item
+
+```
+:QiitaStock
+```
+
+### Open by browser
+
+```
+:QiitaBrowse
+```
