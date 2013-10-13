@@ -208,6 +208,7 @@ function! s:read_content(uuid) " {{{
     let mine = 1
   else
     let mine = 0
+    setlocal readonly
   endif
   let b:qiita_metadata = {
         \ 'private' : content.private,
@@ -323,6 +324,11 @@ endfunction " }}}
 
 function! s:stock_item() " {{{
   if exists('b:qiita_metadata')
+    if b:qiita_metadata.stocked
+      echomsg "Already stocked."
+      return
+    endif
+
     let res = webapi#http#post(s:qiita_path("/items/" . b:qiita_metadata.uuid . "/stock", 1), {}, {}, "PUT")
     if res.status =~ "^2.*"
       let b:qiita_metadata.stocked = 1
