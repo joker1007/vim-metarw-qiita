@@ -89,6 +89,12 @@ or
 :QiitaStock
 ```
 
+### Delete current open item from qiita
+
+```
+:QiitaDelete
+```
+
 ### Open by browser
 
 ```
