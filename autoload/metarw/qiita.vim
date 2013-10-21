@@ -221,6 +221,7 @@ function! s:read_content(uuid) " {{{
 
   command! -buffer QiitaBrowse call s:open_browser()
   command! -buffer QiitaStock  call s:stock_item()
+  command! -buffer QiitaDelete call s:delete_item()
   return ['done', '']
 endfunction " }}}
 
@@ -276,6 +277,20 @@ function! s:stock_item() " {{{
       echomsg "Stocked."
     else
       echoerr "Failed to stocked."
+    endif
+  else
+    echoerr 'Current buffer is not qiita post'
+  endif
+endfunction " }}}
+
+function! s:delete_item() " {{{
+  if exists('b:qiita_metadata')
+    let res = webapi#http#post(s:qiita_path("/items/" . b:qiita_metadata.uuid, 1), {}, {}, "DELETE")
+    if res.status =~ "^2.*"
+      setlocal readonly
+      echomsg "Deleted."
+    else
+      echoerr "Failed to deleted."
     endif
   else
     echoerr 'Current buffer is not qiita post'
