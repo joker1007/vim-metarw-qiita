@@ -225,8 +225,12 @@ function! s:read_content(uuid) " {{{
   return ['done', '']
 endfunction " }}}
 
+function! s:tags_to_title_label(tags)
+  return join(map(a:tags, '"[" . v:val.name. "]"'), '')
+endfunction
+
 function! s:label_format() " {{{
-  return 'v:val.title . " (" . v:val.stock_count . ")"'
+  return 'v:val.title . " (" . v:val.stock_count . ") " . s:tags_to_line(v:val.tags)'
 endfunction " }}}
 
 function! s:read_item_list(url, fakepath, ...) " {{{
